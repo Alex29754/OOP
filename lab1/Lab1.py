@@ -1,190 +1,121 @@
-from math import sqrt
+# Ограничения по координатам
+MAX_WIDTH = 800
+MAX_HEIGHT = 600
 
-SCREEN_WIDTH, SCREEN_HEIGHT = 1024, 768
-
-class Point2d:
-    def __init__(self, x: int, y: int)-> None:
-        self.x, self.y = x, y
-
-    def __str__(self) -> str:
-        return f'({self.x}, {self.y})'
-
-    def __repr__(self) -> str:
-        return f'Point2D({self.x}, {self.y})'
-
-    def __eq__(self, other) -> bool:
-        if not isinstance(other, Point2d):
-            return False
-        return self.x == other.x and self.y == other.y
-
-    # Properties
-    @property #getter x
-    def x(self):
-        return self._x
-
-    @x.setter #setter x
-    def x(self, x) -> None:
-        if x<0 or x>SCREEN_WIDTH:
-            raise ValueError("x out of bounds")
+class Point2D:
+    def __init__(self, x: int, y: int):
+        if not (0 <= x <= MAX_WIDTH):
+            raise ValueError(f"x должен быть в диапазоне [0, {MAX_WIDTH}]")
+        if not (0 <= y <= MAX_HEIGHT):
+            raise ValueError(f"y должен быть в диапазоне [0, {MAX_HEIGHT}]")
         self._x = x
-
-    @property #getter y
-    def y(self):
-        return self._y
-
-    @y.setter #setter y
-    def y(self, y) -> None:
-        if y<0 or y>SCREEN_HEIGHT:
-            raise ValueError("y out of bounds")
         self._y = y
 
-class Vector2d:
-    def __init__(self, x: int, y: int)-> None:
-        self.x, self.y = x, y
+    @property
+    def x(self): return self._x
 
-    # Properties
-    @property #getter x
-    def x(self):
-        return self._x
+    @property
+    def y(self): return self._y
 
-    @x.setter #setter x
-    def x(self, x) -> None:
-        self._x = x
+    def __eq__(self, other): return isinstance(other, Point2D) and self.x == other.x and self.y == other.y
 
-    @property #getter y
-    def y(self):
-        return self._y
+    def __str__(self): return f"Point2D({self.x}, {self.y})"
 
-    @y.setter #setter y
-    def y(self, y) -> None:
-        self._y = y
+    def __repr__(self): return str(self)
 
-    @classmethod
-    def fromPoints(cls, start: Point2d, end: Point2d)-> None:
-        return Vector2d(end.x-start.x, end.y-start.y)
 
-    def __str__(self) -> str:
-        return f'({self.x}, {self.y})'
+class Vector2D:
+    def __init__(self, a, b=None):
+        if isinstance(a, Point2D) and isinstance(b, Point2D):
+            self._x = b.x - a.x
+            self._y = b.y - a.y
+        else:
+            self._x = int(a)
+            self._y = int(b)
 
-    def __repr__(self) -> str:
-        return f'Vector2d({self.x}, {self.y})'
+    @property
+    def x(self): return self._x
 
-    def __abs__(self) -> int:
-        return sqrt(self.x * self.x) + (self.y * self.y)
+    @x.setter
+    def x(self, value): self._x = int(value)
 
-    def __eq__(self, other) -> bool:
-        if not isinstance(other, Vector2d):
-            return False
-        return self.x == other.x and self.y == other.y
+    @property
+    def y(self): return self._y
 
-    def __getitem__(self, index: int):
-        match index:
-            case 0:
-                return self.x
-            case 1:
-                return self.y
-            case _:
-                raise IndexError("Invaild index")
+    @y.setter
+    def y(self, value): self._y = int(value)
 
-    def __setitem__(self, index: int, value: int):
-        match index:
-            case 0:
-                self.x = value
-            case 1:
-                self.y = value
-            case _:
-                raise IndexError("Invaild index")
+    def __getitem__(self, i):
+        if i == 0: return self._x
+        if i == 1: return self._y
+        raise IndexError("Индекс должен быть 0 или 1")
 
-    def __iter__(self):
-        yield self.x
-        yield self.y
+    def __setitem__(self, i, value):
+        if i == 0: self._x = int(value)
+        elif i == 1: self._y = int(value)
+        else: raise IndexError("Индекс должен быть 0 или 1")
 
-    def __len__(self):
-        return 2
+    def __iter__(self): return iter((self._x, self._y))
 
-    def __add__(self, other):
-        if not isinstance(other, Vector2d):
-            raise TypeError("Vector2d can only be added to Vector2d")
-        return Vector2d(self.x + other.x, self.y + other.y)
+    def __len__(self): return 2
 
-    def __sub__(self, other):
-        if not isinstance(other, Vector2d):
-            raise TypeError("Vector2d can only be subtracted from Vector2d")
-        return Vector2d(self.x - other.x, self.y - other.y)
+    def __eq__(self, other): return isinstance(other, Vector2D) and self.x == other.x and self.y == other.y
 
-    def __mul__(self, other):
-        if not isinstance(other, int):
-            raise TypeError("Vector2d can only be multiplied by int")
-        return Vector2d(self.x * other, self.y * other)
+    def __str__(self): return f"Vector2D({self.x}, {self.y})"
 
-    def __rmul__(self, other):
-        if not isinstance(other, int):
-            raise TypeError("Vector2d can only be multiplied by int")
-        return Vector2d(self.x * other, self.y * other)
+    def __repr__(self): return str(self)
 
-    def __truediv__(self, other):
-        if not isinstance(other, int):
-            raise TypeError("Vector2d can only be divided by int")
-        if other == 0:
-            raise ZeroDivisionError("Division by zero")
-        return Vector2d(int(self.x / other), int(self.y / other))
+    def __abs__(self): return (self.x**2 + self.y**2) ** 0.5
 
-    def scalarMultiply(self, other):
-        if not isinstance(other, Vector2d):
-            raise TypeError("Vector2d can only be scalar multiplied by Vector2d")
-        return self.x * other.x + self.y * other.y
+    def __add__(self, other): return Vector2D(self.x + other.x, self.y + other.y)
 
-    @classmethod
-    def getScalarMultiply(cls,vector1, vector2):
-        if not isinstance(vector1, Vector2d) or not isinstance(vector2, Vector2d):
-            raise TypeError("Vector2d can only be scalar multiplied by Vector2d")
-        return vector1.scalarMultiply(vector2)
+    def __sub__(self, other): return Vector2D(self.x - other.x, self.y - other.y)
 
-    def vectorMultiply(self, other):
-        if not isinstance(other, Vector2d):
-            raise TypeError("Vector2d can only be vector multiplied by Vector2d")
-        return self.x * other.y - self.y * other.x
+    def __mul__(self, scalar): return Vector2D(self.x * scalar, self.y * scalar)
 
-    @classmethod
-    def getVectorMultiply(cls, vector1, vector2):
-        if not isinstance(vector1, Vector2d) or not isinstance(vector2, Vector2d):
-            raise TypeError("Vector2d can only be vector multiplied by Vector2d")
-        return vector1.vectorMultiply(vector2)
+    def __truediv__(self, scalar): return Vector2D(self.x / scalar, self.y / scalar)
 
-    def combineMultimply(self, other1, other2):
-        if not isinstance(other1, Vector2d) or not isinstance(other2, Vector2d):
-            raise TypeError("Vector2d can only be combine multiplied by two Vector2d")
-        return 0
+    def dot(self, other): return self.x * other.x + self.y * other.y
 
-    @classmethod
-    def getCombineMultiply(cls, vector1, vector2, vector3):
-        if not isinstance(vector1, Vector2d) or not isinstance(vector2, Vector2d) or not isinstance(vector3, Vector2d):
-            raise TypeError("Vector2d can only be combine multiplied by two Vector2d")
-        return 0
+    @staticmethod
+    def dot_product(v1, v2): return v1.x * v2.x + v1.y * v2.y
 
-#actual test
-p1 = Point2d (69,420)
-p2 = Point2d (300, 500)
-p3 = Point2d (1, 3)
-v1 = Vector2d (35, 100)
-v2 = Vector2d.fromPoints(p1, p2)
-v3 = Vector2d.fromPoints(p1, p3)
+    def cross(self, other): return self.x * other.y - self.y * other.x
 
-print(f'Пример точки: {repr(p1)}')
-print(f'Пример вектор: {repr(v1)}')
-print(f'Пример вектора заданного по точкам: {repr(v2)}')
+    @staticmethod
+    def cross_product(v1, v2): return v1.x * v2.y - v1.y * v2.x
 
-print(f'p1==p2: {p1==p2}')
-print(f'v1==v2: {v1==v2}')
-print(v1==v1)
-print(p2 == p2)
+    def mixed_product(self, *_): return 0  # В 2D всегда 0
 
-print(f'Модуль вектора v1: {abs(v1)}')
-print(f'v1+v2: {v1+v2}')
-print(f'v1-v2: {v1-v2}')
-print(f'v1*5: {v1*5}')
-print(f'5*v1: {5*v1}')
-print(f'v1/5: {v1/5}')
-print(f'Скалярное произведение: {v1.scalarMultiply(v2)}')
-print(f'Векторное произведение: {Vector2d.getVectorMultiply(v1, v2)}')
-print(f'Смешанное произведение: {Vector2d.getCombineMultiply(v1, v2, v3)}')
+
+# Пример использования
+if __name__ == "__main__":
+    a = Point2D(100, 150)
+    b = Point2D(300, 400)
+
+    print("Точка A:", a)
+    print("Точка B:", b)
+
+    v1 = Vector2D(3, 4)
+    v2 = Vector2D(a, b)
+
+    print("Вектор v1:", v1)
+    print("Вектор v2 (из A в B):", v2)
+
+    print("Длина v1:", abs(v1))
+    print("Сумма векторов:", v1 + v2)
+    print("Разность векторов:", v2 - v1)
+    print("Умножение на число:", v1 * 2)
+    print("Деление на число:", v1 / 2)
+
+    print("Скалярное произведение (метод):", v1.dot(v2))
+    print("Скалярное произведение (статич. метод):", Vector2D.dot_product(v1, v2))
+
+    print("Векторное произведение (метод):", v1.cross(v2))
+    print("Векторное произведение (статич. метод):", Vector2D.cross_product(v1, v2))
+
+    print("Смешанное произведение:", v1.mixed_product(v1, v2))
+
+    print(f"Индексация v1: x = {v1[0]}, y = {v1[1]}")
+    v1[0] = 7
+    print("После изменения v1:", v1)
