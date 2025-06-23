@@ -40,13 +40,19 @@ class DataRepository(Generic[T], IDataRepository[T]):
 
     def _load(self):
         if os.path.exists(self.filepath):
-            with open(self.filepath, 'r', encoding='utf-8') as f:
-                raw_data = json.load(f)
-                self._data = [self._deserialize(item) for item in raw_data]
+            try:
+                with open(self.filepath, 'r', encoding='utf-8') as f:
+                    raw_data = json.load(f)
+                    self._data = [self._deserialize(item) for item in raw_data]
+            except Exception as e:
+                print(f"\033[91m[LOAD ERROR] Failed to load data from {self.filepath}: {e}\033[0m")
 
     def _save(self):
-        with open(self.filepath, 'w', encoding='utf-8') as f:
-            json.dump([self._serialize(item) for item in self._data], f, ensure_ascii=False, indent=2)
+        try:
+            with open(self.filepath, 'w', encoding='utf-8') as f:
+                json.dump([self._serialize(item) for item in self._data], f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"\033[91m[SAVE ERROR] Failed to save data to {self.filepath}: {e}\033[0m")
 
     def _serialize(self, item: T) -> dict:
         return item.__dict__
@@ -95,25 +101,35 @@ class IAuthService(Protocol):
 
 
 class AuthService(IAuthService):
-    def __init__(self, auth_file: str):
+    def __init__(self, auth_file: str, user_repo: IUserRepository):
         self.auth_file = auth_file
+        self.user_repo = user_repo
         self._current_user: Optional[User] = None
         self._load()
 
     def _load(self):
         if os.path.exists(self.auth_file):
-            with open(self.auth_file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                data.pop("sort_index", None)
-                self._current_user = User(**data)
+            try:
+                with open(self.auth_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    user_id = data.get("user_id")
+                    if isinstance(user_id, int):
+                        user = self.user_repo.get_by_id(user_id)
+                        if user:
+                            self._current_user = user
+            except Exception as e:
+                print(f"\033[91m[AUTH LOAD ERROR] Failed to load auth file: {e}\033[0m")
 
     def _save(self):
-        if self._current_user:
-            with open(self.auth_file, 'w', encoding='utf-8') as f:
-                json.dump(self._current_user.__dict__, f, ensure_ascii=False, indent=2)
-        else:
-            if os.path.exists(self.auth_file):
-                os.remove(self.auth_file)
+        try:
+            if self._current_user:
+                with open(self.auth_file, 'w', encoding='utf-8') as f:
+                    json.dump({"user_id": self._current_user.id}, f, ensure_ascii=False, indent=2)
+            else:
+                if os.path.exists(self.auth_file):
+                    os.remove(self.auth_file)
+        except Exception as e:
+            print(f"\033[91m[AUTH SAVE ERROR] Failed to save auth file: {e}\033[0m")
 
     def sign_in(self, user: User) -> None:
         self._current_user = user
@@ -132,9 +148,10 @@ class AuthService(IAuthService):
         return self._current_user
 
 
+# region Demonstration
 if __name__ == "__main__":
     repo = UserRepository("users.json")
-    auth = AuthService("auth.json")
+    auth = AuthService("auth.json", repo)
 
     user = User(id=1, name="Alice", login="alice", password="pass123", email="alice@mail.com")
     if not repo.get_by_id(user.id):
@@ -152,6 +169,7 @@ if __name__ == "__main__":
 
     auth.sign_out()
 
-    auth2 = AuthService("auth.json")
+    auth2 = AuthService("auth.json", repo)
     print("Автоавторизация:", auth2.is_authorized)
     print("Пользователь:", auth2.current_user)
+# endregion

@@ -5,6 +5,7 @@ import re, socket
 class LogFilterProtocol(Protocol):
     def match(self, text: str) -> bool: ...
 
+
 class LogHandlerProtocol(Protocol):
     def handle(self, text: str) -> None: ...
 # endregion
@@ -17,18 +18,30 @@ class SimpleLogFilter:
     def match(self, text: str) -> bool:
         return self.pattern in text
 
+
 class ReLogFilter:
     def __init__(self, pattern: str):
-        self.pattern = re.compile(pattern)
+        try:
+            self.pattern = re.compile(pattern)
+        except re.error as e:
+            print(f"\033[91m[REGEX ERROR] Invalid regex pattern: {e}\033[0m")
+            self.pattern = None
 
     def match(self, text: str) -> bool:
-        return bool(self.pattern.search(text))
+        try:
+            if self.pattern is None:
+                return False
+            return bool(self.pattern.search(text))
+        except Exception as e:
+            print(f"\033[91m[REGEX MATCH ERROR] Failed to apply regex: {e}\033[0m")
+            return False
 # endregion
 
 # region Handlers
 class ConsoleHandler:
     def handle(self, text: str) -> None:
         print(text)
+
 
 class FileHandler:
     def __init__(self, filename: str):
@@ -40,6 +53,7 @@ class FileHandler:
                 f.write(text + '\n')
         except Exception as e:
             print(f"\033[91m[FILE ERROR] Failed to write to file: {e}\033[0m")
+
 
 class SocketHandler:
     def __init__(self, host: str, port: int):
@@ -53,6 +67,7 @@ class SocketHandler:
                 s.sendall((text + '\n').encode('utf-8'))
         except Exception as e:
             print(f"\033[91m[SOCKET ERROR] Failed to send log: {e}\033[0m")
+
 
 class SyslogHandler:
     def handle(self, text: str) -> None:
@@ -81,7 +96,7 @@ if __name__ == "__main__":
 
     consoleHandler = ConsoleHandler()
     fileHandler = FileHandler("Log.log")
-    socketHandler = SocketHandler("localhost", 6969)  # или фейковый адрес
+    socketHandler = SocketHandler("localhost", 6969)  # фейковый адрес
     syslogHandler = SyslogHandler()
 
     errorLogger = Logger(filters=[errorFilter], handlers=[consoleHandler, fileHandler, syslogHandler])

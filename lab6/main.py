@@ -3,6 +3,15 @@ from abc import ABC, abstractmethod
 from typing import Dict, List
 from pathlib import Path
 
+# === Настройки ===
+
+OUTPUT_FILE = "output.txt"
+
+def write_to_output(text: str, end: str = "\n"):
+    with open(OUTPUT_FILE, "a", encoding="utf-8") as f:
+        f.write(text + end)
+
+
 # ==== Command Pattern ====
 
 class Command(ABC):
@@ -14,6 +23,7 @@ class Command(ABC):
     def undo(self):
         pass
 
+
 class PrintCommand(Command):
     def __init__(self, char: str, output: List[str]):
         self.char = char
@@ -22,18 +32,17 @@ class PrintCommand(Command):
     def execute(self):
         self.output.append(self.char)
         print(self.char, end="")
-        with open("output.txt", "a") as f:
-            f.write(self.char)
+        write_to_output(self.char, end="")
 
     def undo(self):
         if self.output:
             removed = self.output.pop()
             print("\nundo")
-            with open("output.txt", "a") as f:
-                f.write("\nundo")
-            print(''.join(self.output))
-            with open("output.txt", "a") as f:
-                f.write('\n' + ''.join(self.output) + '\n')
+            write_to_output("undo")
+            updated = ''.join(self.output)
+            print(updated)
+            write_to_output(updated)
+
 
 class VolumeUpCommand(Command):
     def __init__(self):
@@ -41,14 +50,13 @@ class VolumeUpCommand(Command):
 
     def execute(self):
         print(self.message)
-        with open("output.txt", "a") as f:
-            f.write("\n" + self.message + "\n")
+        write_to_output(self.message)
 
     def undo(self):
         msg = "volume decreased -20%"
         print("undo ->", msg)
-        with open("output.txt", "a") as f:
-            f.write("undo -> " + msg + "\n")
+        write_to_output("undo -> " + msg)
+
 
 class VolumeDownCommand(Command):
     def __init__(self):
@@ -56,14 +64,13 @@ class VolumeDownCommand(Command):
 
     def execute(self):
         print(self.message)
-        with open("output.txt", "a") as f:
-            f.write("\n" + self.message + "\n")
+        write_to_output(self.message)
 
     def undo(self):
         msg = "volume increased +20%"
         print("undo ->", msg)
-        with open("output.txt", "a") as f:
-            f.write("undo -> " + msg + "\n")
+        write_to_output("undo -> " + msg)
+
 
 class MediaPlayerCommand(Command):
     def __init__(self):
@@ -73,15 +80,14 @@ class MediaPlayerCommand(Command):
         self.running = True
         msg = "media player launched"
         print(msg)
-        with open("output.txt", "a") as f:
-            f.write("\n" + msg + "\n")
+        write_to_output(msg)
 
     def undo(self):
         if self.running:
             msg = "media player closed"
             print("undo ->", msg)
-            with open("output.txt", "a") as f:
-                f.write("undo -> " + msg + "\n")
+            write_to_output("undo -> " + msg)
+
 
 # ==== Memento ====
 
@@ -90,14 +96,15 @@ class KeyboardStateSaver:
         self.filepath = Path(filepath)
 
     def save(self, associations: Dict[str, str]):
-        with self.filepath.open("w") as f:
+        with self.filepath.open("w", encoding="utf-8") as f:
             json.dump(associations, f)
 
     def load(self) -> Dict[str, str]:
         if self.filepath.exists():
-            with self.filepath.open("r") as f:
+            with self.filepath.open("r", encoding="utf-8") as f:
                 return json.load(f)
         return {}
+
 
 # ==== Keyboard ====
 
@@ -142,14 +149,15 @@ class Keyboard:
             print("Nothing to redo")
 
     def save_state(self):
-        # Save only class names
         save_dict = {k: v.__class__.__name__ for k, v in self.commands.items()}
         self.state_saver.save(save_dict)
 
     def load_state(self):
         mapping = self.state_saver.load()
         for key, command_name in mapping.items():
-            self.commands[key] = self._create_command_by_name(command_name)
+            command = self._create_command_by_name(command_name)
+            if command:
+                self.commands[key] = command
 
     def _create_command_by_name(self, name: str) -> Command:
         if name == "VolumeUpCommand":
@@ -159,9 +167,9 @@ class Keyboard:
         elif name == "MediaPlayerCommand":
             return MediaPlayerCommand()
         elif name == "PrintCommand":
-            return PrintCommand("*", self.text_output)  # placeholder
-        else:
-            return None
+            return PrintCommand("*", self.text_output)  # заглушка
+        return None
+
 
 # ==== Пример использования ====
 

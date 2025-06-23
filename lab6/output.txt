@@ -54,3 +54,44 @@ volume decreased -20%
 media player launched
 undo -> media player closed
 undo -> volume increased +20%
+abc
+undo
+ab
+
+undo
+a
+b
+volume increased +20%
+
+volume decreased -20%
+
+media player launched
+undo -> media player closed
+undo -> volume increased +20%
+abcundo
+ab
+undo
+a
+bvolume increased +20%
+volume decreased -20%
+media player launched
+undo -> media player closed
+undo -> volume increased +20%
+abcundo
+ab
+undo
+a
+bvolume increased +20%
+volume decreased -20%
+media player launched
+undo -> media player closed
+undo -> volume increased +20%
+abcundo
+ab
+undo
+a
+bvolume increased +20%
+volume decreased -20%
+media player launched
+undo -> media player closed
+undo -> volume increased +20%
