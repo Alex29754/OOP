@@ -4,24 +4,37 @@ MAX_HEIGHT = 600
 
 class Point2D:
     def __init__(self, x: int, y: int):
-        if not (0 <= x <= MAX_WIDTH):
+        self.x = x
+        self.y = y
+
+    @property
+    def x(self):
+        return self._x
+
+    @x.setter
+    def x(self, value):
+        if not (0 <= value <= MAX_WIDTH):
             raise ValueError(f"x должен быть в диапазоне [0, {MAX_WIDTH}]")
-        if not (0 <= y <= MAX_HEIGHT):
+        self._x = value
+
+    @property
+    def y(self):
+        return self._y
+
+    @y.setter
+    def y(self, value):
+        if not (0 <= value <= MAX_HEIGHT):
             raise ValueError(f"y должен быть в диапазоне [0, {MAX_HEIGHT}]")
-        self._x = x
-        self._y = y
+        self._y = value
 
-    @property
-    def x(self): return self._x
+    def __eq__(self, other):
+        return isinstance(other, Point2D) and self.x == other.x and self.y == other.y
 
-    @property
-    def y(self): return self._y
+    def __str__(self):
+        return f"Point2D({self.x}, {self.y})"
 
-    def __eq__(self, other): return isinstance(other, Point2D) and self.x == other.x and self.y == other.y
-
-    def __str__(self): return f"Point2D({self.x}, {self.y})"
-
-    def __repr__(self): return str(self)
+    def __repr__(self):
+        return str(self)
 
 
 class Vector2D:
@@ -95,6 +108,10 @@ if __name__ == "__main__":
 
     print("Точка A:", a)
     print("Точка B:", b)
+
+    a.x = 200
+    a.y = 250
+    print("Изменённая точка A:", a)
 
     v1 = Vector2D(3, 4)
     v2 = Vector2D(a, b)
